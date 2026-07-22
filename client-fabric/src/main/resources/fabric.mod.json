@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "guidialog",
+	"version": "${version}",
+	"name": "GUIDialog",
+	"description": "Shows GUI dialogs, like Bedrock does.",
+	"authors": [
+		"Calebh101"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/guidialog/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "com.calebh101.guidialog.GUIDialog",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		"guidialog.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	}
+}

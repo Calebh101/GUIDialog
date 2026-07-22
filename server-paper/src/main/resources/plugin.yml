@@ -1,0 +1,6 @@
+name: GUIDialog
+version: '${version}'
+
+main: org.calebh101.gUIDialog.GUIDialog
+api-version: '26.1.2'
+load: POSTWORLD
