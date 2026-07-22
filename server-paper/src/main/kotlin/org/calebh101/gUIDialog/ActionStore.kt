@@ -12,6 +12,10 @@ class ActionStore(private val plugin: GUIDialog) {
         config.save(file)
     }
 
+    fun get(key: String): String? {
+        return config.getString(key)
+    }
+
     fun delete(key: String) {
         config.set(key, null)
         config.save(file)

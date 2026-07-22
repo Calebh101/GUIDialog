@@ -1,1 +1,39 @@
 /test_dialog
+/time set day
+/dialog show @s
+/test_dialog
+/dialog show @s minecraft:custom_options
+/dialog show @s minecraft:server_links
+/guidialog
+/guidialog send @s {"title":"Test","body":"Hello, world!","actions":{}}
+/guidialog send Player637 {"title":"Test","body":"Hello, world!","actions":{}}
+/guidialog
+/guidialog actions
+/guidialog actions add ok say Hi!
+/guidialog actions list
+/guidialog
+/guidialog actions list
+/guidialog actions add ok say Hi!
+/guidialog actions
+/guidialog actions list
+/guidialog
+/guidialog actions list
+/guidialog actions get ok
+/guidialog actions list
+/guidialog actions get test
+/guidialog actions set ok /say Ok!
+/guidialog actions get ok
+/guidialog send @s {"title":"Hi!","body":"Hello, world!","actions":{}}
+/guidialog send @r {"title":"Hi!","body":"Hello, world!","actions":{}}
+/guidialog send @r {"title":"Hi!","body":"Hello, world!","actions":{"OK":"ok"}}
+/deop @s
+/deop Player546
+/guidialog
+/guidialog send @s {"title":"Hello!","body":"Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvi
+/guidialog send sessions
+/guidialog send @s {"title":"Hello!","body":"Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvi
+/guidialog send @s "{\"title\":\"Hello!\",\"body\":\"Lorem ipsum dolor sit amet...\",\"actions\":{\"OK\":\"ok\"}}"
+/give @s minecraft:command_block
+/gamemode creative
+/give @s minecraft:bamboo_button
+/guidialog actions set up tp @s 0 300 0
