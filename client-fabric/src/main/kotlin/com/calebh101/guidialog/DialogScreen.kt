@@ -17,8 +17,13 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component
     protected override fun init() {
         val buttonWidth = 120
         val buttonHeight = 20
-        val bottomMargin = 30
+        val rowSpacing = 4
+        val bottomMargin = 10
         val contentMargin = 10
+        val contentTop = 25
+
+        val labels = dialog.actions.keys + "Close"
+        val chunked = labels.chunked(3)
 
         val header = StringWidget(
             Component.literal(dialog.title),
@@ -32,7 +37,8 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component
 
         this.addRenderableWidget(header)
 
-        val contentAreaHeight = this.height - bottomMargin - 45
+        val buttonsAreaHeight = (chunked.size * buttonHeight) + ((chunked.size - 1) * rowSpacing)
+        val contentAreaHeight = this.height - contentTop - buttonsAreaHeight - bottomMargin - rowSpacing
         val contentWidth = this.width - (contentMargin * 2)
 
         val content = MultiLineTextWidget(Component.literal(dialog.body), this.font).setMaxWidth(contentWidth)
@@ -46,34 +52,36 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component
         scrollable.setPosition(contentX, 25)
         scrollable.visitWidgets { this.addRenderableWidget(it) }
 
-        val buttons = LinearLayout.horizontal().spacing(8)
-        val labels = dialog.actions.keys + "Close"
+        chunked.forEachIndexed { index, set ->
+            val buttons = LinearLayout.horizontal().spacing(8)
 
-        labels.forEach { label ->
-            buttons.addChild(
-                Button.builder(Component.literal(label)) {
-                    if (label.lowercase() == "close") {
-                        this.onClose()
-                    } else {
-                        val id = dialog.actions[label]!!
-                        logger.info("Received action: $id ($label)")
+            set.forEach { label ->
+                buttons.addChild(
+                    Button.builder(Component.literal(label)) {
+                        if (label.lowercase() == "close") {
+                            this.onClose()
+                        } else {
+                            val id = dialog.actions[label]!!
+                            logger.info("Received action: $id ($label)")
 
-                        plugin.sendAction(id = dialog.id, action = id)
-                        this.onClose()
+                            plugin.sendAction(id = dialog.id, action = id)
+                            this.onClose()
+                        }
                     }
-                }
-                .bounds(0, 0, buttonWidth, buttonHeight)
-                .build()
-            )
+                        .bounds(0, 0, buttonWidth, buttonHeight)
+                        .build()
+                )
+            }
+
+            buttons.arrangeElements()
+
+            val rowX = (this.width - buttons.width) / 2
+            val rowsFromBottom = chunked.size - index  // 1 for last row, 2 for second-to-last, etc.
+            val rowY = this.height - bottomMargin - (rowsFromBottom * buttonHeight) - ((rowsFromBottom - 1) * rowSpacing)
+
+            buttons.setPosition(rowX, rowY)
+            buttons.visitWidgets { this.addRenderableWidget(it) }
         }
-
-        buttons.arrangeElements()
-
-        val rowX = (this.width - buttons.width) / 2
-        val rowY = this.height - bottomMargin
-
-        buttons.setPosition(rowX, rowY)
-        buttons.visitWidgets { this.addRenderableWidget(it) }
     }
 
     public override fun extractRenderState(graphics: GuiGraphicsExtractor, mouseX: Int, mouseY: Int, delta: Float) {

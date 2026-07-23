@@ -37,3 +37,4 @@
 /gamemode creative
 /give @s minecraft:bamboo_button
 /guidialog actions set up tp @s 0 300 0
+/guidialog send @s {"title":"Test dialog","body":"Hello!","actions":{"OK":"ok","OK 2":"ok2","OK 3":"ok3","OK 4":"ok4","OK 5":"ok5","OK 6":"ok6"}}

@@ -1,4 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_highlight/flutter_highlight.dart';
+import 'package:flutter_highlight/themes/github.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
+import 'package:localpkg_flutter/localpkg.dart';
+
+class DialogAction {
+  final Key key = UniqueKey();
+  final TextEditingController id;
+  final TextEditingController pretty;
+
+  DialogAction({required this.id, required this.pretty});
+}
 
 void main() {
   runApp(const MyApp());
@@ -7,115 +22,183 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowCheckedModeBanner: false,
+      title: 'GUIDialog',
+      theme: .light(),
+      darkTheme: .dark(),
+      home: Home(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class Home extends StatefulWidget {
+  const Home({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<Home> createState() => _HomeState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomeState extends State<Home> {
+  final title = TextEditingController();
+  final body = TextEditingController();
 
-  void _incrementCounter() {
+  final key = FormKey();
+  final actions = <DialogAction>[];
+
+  String? calculated;
+  List<String> warnings = [];
+  bool changed = true;
+
+  void calculate() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      changed = false;
+      warnings.clear();
+
+      if (title.text.isEmptyTrimmed) warnings.add("Title is empty.");
+      if (title.text.contains("\n")) warnings.add("Title should only have one line.");
+      if (body.text.isEmptyTrimmed) warnings.add("Body is empty.");
+
+      for (final (i, action) in actions.indexed) {
+        if (action.id.text.isEmptyTrimmed) warnings.add("Action #${i + 1} ID is empty.");
+        if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(action.id.text)) warnings.add("Action #${i + 1} ID can only contain letters, numbers, or underscores.");
+        if (action.pretty.text.isEmptyTrimmed) warnings.add("Action #${i + 1} name is empty.");
+      }
+
+      calculated = jsonEncode({"title": title.text, "body": body.text, "actions": Map.fromEntries(actions.map((x) => MapEntry(x.pretty.text, x.id.text)))});
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text("GUIDialog${changed ? "*" : ""}"),
+        centerTitle: true,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Column(
+              spacing: 8,
+              children: [
+                TextField(
+                  controller: title,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Title...',
+                  ),
+                  onChanged: (value) => setState(() => changed = true),
+                ),
+                TextField(
+                  minLines: 5,
+                  maxLines: null,
+                  controller: body,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Body...',
+                  ),
+                  onChanged: (value) => setState(() => changed = true),
+                ),
+                ReorderableListView.builder(
+                  shrinkWrap: true,
+                  buildDefaultDragHandles: false,
+                  itemCount: actions.length,
+                  onReorderItem: (oldIndex, newIndex) {
+                    setState(() {
+                      final item = actions.removeAt(oldIndex);
+                      actions.insert(newIndex, item);
+                    });
+                  },
+                  itemBuilder: (context, i) {
+                    final action = actions[i];
+
+                    return ListTile(
+                      key: action.key,
+                      trailing: Row(
+                        mainAxisSize: .min,
+                        children: [
+                          IconButton(onPressed: () {
+                            setState(() {
+                              actions.removeAt(i);
+                              changed = true;
+                            });
+                          }, icon: Icon(Icons.delete), color: Colors.red),
+                          ReorderableDelayedDragStartListener(
+                            index: i,
+                            child: Icon(Icons.drag_handle),
+                          ),
+                        ],
+                      ),
+                      title: Row(
+                        mainAxisSize: .min,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: action.pretty,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Pretty name...',
+                              ),
+                              onChanged: (value) => setState(() => changed = true),
+                            ),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: action.id,
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Action ID...',
+                              ),
+                              onChanged: (value) => setState(() => changed = true),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                Row(
+                  mainAxisAlignment: .center,
+                  children: [
+                    TextButton(onPressed: calculate, child: Text("Generate")),
+
+                    if (calculated != null) TextButton(onPressed: () {
+                      Clipboard.setData(.new(text: calculated!));
+                      showSnackBar(context, "Copied ${calculated?.length} characters!");
+                    }, child: Text("Copy")),
+
+                    TextButton(onPressed: () {
+                      setState(() {
+                        changed = true;
+                        actions.add(DialogAction(id: TextEditingController(), pretty: TextEditingController()));
+                      });
+                    }, child: Text("Add Action")),
+                  ],
+                ),
+                Column(
+                  mainAxisSize: .min,
+                  children: [
+                    for (final warning in warnings) Text("Warning: $warning"),
+                  ],
+                ),
+                if (calculated != null) HighlightView(
+                  calculated!,
+                  language: 'json',
+                  theme: Theme.of(context).brightness == Brightness.dark ? monokaiSublimeTheme : githubTheme,
+                  padding: .all(16),
+                  textStyle: const TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
