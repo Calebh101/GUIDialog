@@ -31,7 +31,7 @@ Other commands:
 
 Dialogs have these elements:
 
-- Title: Text shown at the top of the screen, with a slightly bigger font size. This should not have multiple lines.
+- Title: Text shown at the top of the screen. This should not have multiple lines.
 - Body: The text shown in the center of the screen. This can be as long or have as many lines as you want; text is wrapped, and it's scrollable.
 - Actions: The buttons that your dialog will show. The name of the button and the ID of the action are both included in the dialog payload.
 
