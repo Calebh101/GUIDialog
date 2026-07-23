@@ -35,7 +35,7 @@ dependencies:
   flutter_highlight: ^0.7.0
   localpkg_flutter:
     git:
-      url: https://github.com/Calebh101/localpkg-flutter-2.git
+      url: https://github.com/Calebh101/localpkg-flutter-2
       ref: main
 
 dev_dependencies:
