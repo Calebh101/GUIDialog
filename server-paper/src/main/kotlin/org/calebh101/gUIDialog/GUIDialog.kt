@@ -12,7 +12,9 @@ import io.papermc.paper.plugin.lifecycle.event.handler.LifecycleEventHandler
 import io.papermc.paper.plugin.lifecycle.event.registrar.ReloadableRegistrarEvent
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents
 import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.event.ClickEvent
 import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
@@ -42,6 +44,24 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                 logger.info("Registering commands...")
 
                 val root = Commands.literal("guidialog")
+                    .executes { context ->
+                        val sender = context.source.sender
+                        val version = description.version
+
+                        sender.sendMessage(
+                            Component.text()
+                                .append(Component.text("GUIDialog By Calebh101").decorate(TextDecoration.BOLD))
+                                .append(Component.newline())
+                                .append(Component.text("Repo: "))
+                                .append(Component.text("https://github.com/Calebh101/GUIDialog")
+                                    .color(NamedTextColor.BLUE)
+                                    .decorate(TextDecoration.UNDERLINED)
+                                    .clickEvent(ClickEvent.openUrl("https://github.com/Calebh101/GUIDialog")))
+                                .build()
+                        );
+
+                        Command.SINGLE_SUCCESS
+                    }
                     .then(
                         Commands.literal("dialogs")
                             .requires { sender -> sender.sender.hasPermission("guidialog.dialogs") }
@@ -51,7 +71,7 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                                     val data = dialogs.load()
 
                                     sender.sendMessage(Component.text("All ${data.size} dialogs(s):\n${data.entries.map {
-                                        "- ${it.key}: /${it.value}"
+                                        "- ${it.key}: /${it.value.build()}"
                                     }.joinToString("\n")}"))
 
                                     Command.SINGLE_SUCCESS
@@ -218,7 +238,7 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                                 .then(Commands.argument("id", StringArgumentType.word())
                                 .executes { context ->
                                     val sender = context.source.sender
-                                    val resolver = context.getArgument("player", PlayerSelectorArgumentResolver::class.java)
+                                    val resolver = context.getArgument("target", PlayerSelectorArgumentResolver::class.java)
                                     var target = resolver.resolve(context.source).firstOrNull()
                                     val id = StringArgumentType.getString(context, "id")
 
@@ -254,15 +274,15 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                     .then(
                         Commands.literal("send")
                         .requires { sender -> sender.sender.hasPermission("guidialog.send") }
-                        .then(Commands.argument("player", ArgumentTypes.player())
+                        .then(Commands.argument("player", ArgumentTypes.players())
                         .then(Commands.argument("payload", StringArgumentType.greedyString())
                         .executes { context ->
                             val sender = context.source.sender
                             val payload = StringArgumentType.getString(context, "payload")
                             val resolver = context.getArgument("player", PlayerSelectorArgumentResolver::class.java)
-                            val target: Player? = resolver.resolve(context.source).firstOrNull()
+                            val targets: List<Player> = resolver.resolve(context.source)
 
-                            if (target == null) {
+                            if (targets.isEmpty()) {
                                 sender.sendMessage(Component.text("No matching player found.", NamedTextColor.RED))
                                 return@executes 0
                             }
@@ -276,9 +296,13 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                                 }
 
                                 val dialog = payload.toDialog()
-                                sessions[dialog.id] = target.uniqueId
-                                sendPayload(target, dialog)
-                                sender.sendMessage(Component.text("Sent payload to user ${target.name}.", NamedTextColor.GREEN))
+
+                                for (target in targets) {
+                                    sessions[dialog.id] = target.uniqueId
+                                    sendPayload(target, dialog)
+                                }
+
+                                sender.sendMessage(Component.text("Sent payload to user(s) ${targets.map { it.name }.joinToString(", ")}.", NamedTextColor.GREEN))
                             } catch (e: JsonSyntaxException) {
                                 sender.sendMessage(Component.text("Invalid JSON: ${e.message}", NamedTextColor.RED))
                                 return@executes Command.SINGLE_SUCCESS
@@ -325,67 +349,73 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
     }
 
     override fun onPluginMessageReceived(channel: String, player: Player, message: ByteArray) {
-        if (channel == "guidialog:action") {
-            val data = ByteStreams.newDataInput(message)
-            val id = data.readLong()
-            val action = data.readUTF()
+        try {
+            if (channel == "guidialog:action") {
+                val data = ByteStreams.newDataInput(message)
+                val id = data.readLong()
+                val action = data.readUTF()
 
-            logger.info("Received action $action and ID $id from channel $channel and player ${player.name}")
-
-            if (sessions[id] != player.uniqueId) {
-                player.sendMessage(Component.text("Invalid session ID.", NamedTextColor.RED))
-                return
-            }
-
-            if (!action.matches(Regex("[A-Za-z0-9_]+"))) {
-                player.sendMessage(
-                    Component.text(
-                        "ID may only contain letters, numbers, or underscores: $action",
-                        NamedTextColor.RED
-                    )
-                )
-                return
-            }
-
-            var command = actionsStore.get(action)
-
-            if (command == null) {
-                player.sendMessage(Component.text("Dialog action not found: $action", NamedTextColor.RED))
-                return
-            }
-
-            command = processCommand(command = command, player = player)
-            logger.info("Running action $action for player ${player.name} and dialog $id: $command")
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
-            sessions.remove(id)
-        } else if (channel == "guidialog:register") {
-            if (!player.hasPermission("guidialog.dialogs")) {
-                player.sendMessage(Component.text("You don't have permission to do this!", NamedTextColor.RED))
-                return
-            }
-
-            val data = ByteStreams.newDataInput(message).readUTF().split(" ")
-            val id = data.first()
-            val payload = data.subList(1, data.size).joinToString(" ")
-
-            try {
-                val payload = Gson().fromJson(payload, DialogPayload::class.java)
-
-                if (payload == null) {
-                    player.sendMessage(Component.text("Payload parsed to null.", NamedTextColor.RED))
+                if (sessions[id] != player.uniqueId) {
+                    player.sendMessage(Component.text("Invalid session ID.", NamedTextColor.RED))
                     return
                 }
 
-                payload.toDialog()
-                dialogs.save(mapOf(id to payload))
-                player.sendMessage(Component.text("Saved dialog $id!", NamedTextColor.GREEN))
-            } catch (e: JsonSyntaxException) {
-                player.sendMessage(Component.text("Invalid JSON: ${e.message}", NamedTextColor.RED))
-                return
-            } catch (e: IllegalStateException) {
-                player.sendMessage(Component.text("Invalid payload: ${e.message}", NamedTextColor.RED))
-                return
+                if (!action.matches(Regex("[A-Za-z0-9_]+"))) {
+                    player.sendMessage(
+                        Component.text(
+                            "ID may only contain letters, numbers, or underscores: $action",
+                            NamedTextColor.RED
+                        )
+                    )
+                    return
+                }
+
+                if (action != "close") {
+                    var command = actionsStore.get(action)
+
+                    if (command == null) {
+                        player.sendMessage(Component.text("Dialog action not found: $action", NamedTextColor.RED))
+                        return
+                    }
+
+                    command = processCommand(command = command, player = player)
+                    logger.info("Running action $action for player ${player.name} and dialog $id: $command")
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
+                }
+
+                sessions.remove(id)
+            } else if (channel == "guidialog:register") {
+                if (!player.hasPermission("guidialog.dialogs")) {
+                    player.sendMessage(Component.text("You don't have permission to do this!", NamedTextColor.RED))
+                    return
+                }
+
+                val data = ByteStreams.newDataInput(message).readUTF().split(" ")
+                val id = data.first()
+                val payload = data.subList(1, data.size).joinToString(" ")
+
+                try {
+                    val payload = Gson().fromJson(payload, DialogPayload::class.java)
+
+                    if (payload == null) {
+                        player.sendMessage(Component.text("Payload parsed to null.", NamedTextColor.RED))
+                        return
+                    }
+
+                    payload.toDialog()
+                    dialogs.save(mapOf(id to payload))
+                    player.sendMessage(Component.text("Saved dialog $id!", NamedTextColor.GREEN))
+                } catch (e: JsonSyntaxException) {
+                    player.sendMessage(Component.text("Invalid JSON: ${e.message}", NamedTextColor.RED))
+                    return
+                } catch (e: IllegalStateException) {
+                    player.sendMessage(Component.text("Invalid payload: ${e.message}", NamedTextColor.RED))
+                    return
+                }
             }
+        } catch (e: Error) {
+            logger.warning("Unhandled error when processing message on channel $channel from player ${player.name}: $e")
+            player.sendMessage(Component.text("An unhandled error occurred.", NamedTextColor.RED))
         }
     }
 }

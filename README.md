@@ -27,6 +27,10 @@ Other commands:
 - To delete an action, run `/guidialog actions delete <id>`.
 - To list all actions you've created, run `/guidialog actions list`.
 
+### Running actions
+
+Actions are either ran when the user uses an action, or when the `/guidialog actions run` command is run.
+
 ## Dialogs
 
 Dialogs have these elements:
@@ -54,6 +58,14 @@ Make sure it's compressed to 1 line!
 **Need help making this?** I made a generator:
 https://guidialog.calebh101.net
 
----
+### Saving dialogs
 
-This mod targets Minecraft version **26.1.2**.
+You can save and reuse dialogs with the `/guidialog dialogs` command.
+
+- `/guidialog dialogs set <id> <payload>`: Set a preset dialog from a payload. This is like using `/guidialog send`.
+- `/guidialog dialogs get <id>`: Get the JSON of a dialog from an ID.
+- `/guidialog dialogs list`: List all saved dialogs.
+- `/guidialog dialogs delete <id>`: Delete a dialog by ID.
+- `/guidialog dialogs input`: Open a screen to save a dialog without using chat. This is used to avoid sending thousands of characters in the chat.
+
+In `/guidialog send`, you can replace the `payload` parameter with the exact (case-sensitive) ID of the dialog you saved.

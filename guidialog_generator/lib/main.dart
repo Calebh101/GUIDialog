@@ -6,6 +6,7 @@ import 'package:flutter_highlight/flutter_highlight.dart';
 import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:localpkg_flutter/localpkg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Section sign
 const String sec = "§";
@@ -75,6 +76,19 @@ class _HomeState extends State<Home> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    title.text = prefs.getString("title")?.nullIfEmptyTrimmed ?? "";
+    body.text = prefs.getString("body")?.nullIfEmptyTrimmed ?? "";
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -113,7 +127,11 @@ class _HomeState extends State<Home> {
                     border: OutlineInputBorder(),
                     hintText: 'Title...',
                   ),
-                  onChanged: (value) => setState(() => changed = true),
+                  onChanged: (value) async {
+                    setState(() => changed = true);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString("title", value);
+                  },
                 ),
                 TextField(
                   minLines: 5,
@@ -123,7 +141,11 @@ class _HomeState extends State<Home> {
                     border: OutlineInputBorder(),
                     hintText: 'Body...',
                   ),
-                  onChanged: (value) => setState(() => changed = true),
+                  onChanged: (value) async {
+                    setState(() => changed = true);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString("body", value);
+                  },
                 ),
                 ReorderableListView.builder(
                   shrinkWrap: true,

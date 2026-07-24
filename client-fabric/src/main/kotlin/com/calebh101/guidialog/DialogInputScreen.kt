@@ -85,7 +85,7 @@ class DialogInputScreen(val plugin: GUIDialog) : Screen(Component.literal("Dialo
                 try {
                     Gson().fromJson(bodyInput.value, OtherDialog::class.java)
                 } catch (e: JsonSyntaxException) {
-                    error("Invalid JSON: ${e.message}")
+                    error("Invalid JSON.")
                     return@builder
                 } catch (e: IllegalStateException) {
                     error("Invalid payload: ${e.message}")

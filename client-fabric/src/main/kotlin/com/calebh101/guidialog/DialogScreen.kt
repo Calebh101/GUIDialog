@@ -60,6 +60,7 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog, val name: String) 
                 buttons.addChild(
                     Button.builder(Component.literal(label)) {
                         if (label.lowercase() == "close") {
+                            plugin.sendAction(id = dialog.id, action = "close")
                             this.onClose()
                         } else {
                             val id = dialog.actions[label]!!

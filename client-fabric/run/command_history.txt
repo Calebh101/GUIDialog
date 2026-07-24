@@ -1,16 +1,3 @@
-/test_dialog
-/time set day
-/dialog show @s
-/test_dialog
-/dialog show @s minecraft:custom_options
-/dialog show @s minecraft:server_links
-/guidialog
-/guidialog send @s {"title":"Test","body":"Hello, world!","actions":{}}
-/guidialog send Player637 {"title":"Test","body":"Hello, world!","actions":{}}
-/guidialog
-/guidialog actions
-/guidialog actions add ok say Hi!
-/guidialog actions list
 /guidialog
 /guidialog actions list
 /guidialog actions add ok say Hi!
@@ -44,3 +31,20 @@
 /guidialog dialogs get elise_1
 /guidialog dialogs set_from
 /guidialog send @s test
+/guidialog send @s elise_1
+/time set day
+/guidialog dialogs get elise_1
+/guidialog dialogs get elise_2
+/guidialog dialogs list
+/guidialog
+/guidialog dialogs list
+/guidialog dialogs delete test
+/guidialog dialogs list
+/guidialog send @s elise_1
+/guidialog actions set ok /tell @s OK!
+/guidialog actions run @s ok
+/guidialog
+/guidialog actions run @s ok
+/guidialog actions run @s oj
+/guidialog send @a elise_1
+/guidialog dialogs input
