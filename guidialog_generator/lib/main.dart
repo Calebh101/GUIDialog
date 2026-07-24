@@ -222,7 +222,7 @@ class _HomeState extends State<Home> {
                       });
                     }, child: Text("Add Action")),
 
-                    if (calculated != null) TextButton(onPressed: () {
+                    TextButton(onPressed: () {
                       Clipboard.setData(.new(text: sec));
                       showSnackBar(context, "Copied: $sec");
                     }, child: Text(sec)),

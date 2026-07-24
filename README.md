@@ -19,7 +19,7 @@ Actions are defined by IDs. An ID can have letters, numbers, and underscores *on
 (Example: `my_dialog_action_ok`)
 
 To register an action, run `/guidialog actions set <id> <command>`.
-`<command>` will be run as the console. To reference the target player in the command, use `@s`.
+`<command>` will be run as the player (with `execute as`), but will have the same permissions as the console.
 (This will be replaced with the player's username.)
 
 Other commands:

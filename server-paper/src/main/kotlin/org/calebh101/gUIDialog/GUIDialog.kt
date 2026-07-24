@@ -71,7 +71,7 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                                     val data = dialogs.load()
 
                                     sender.sendMessage(Component.text("All ${data.size} dialogs(s):\n${data.entries.map {
-                                        "- ${it.key}: /${it.value.build()}"
+                                        "- ${it.key}: ${it.value.build()}"
                                     }.joinToString("\n")}"))
 
                                     Command.SINGLE_SUCCESS
@@ -295,9 +295,8 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                                     return@executes Command.SINGLE_SUCCESS
                                 }
 
-                                val dialog = payload.toDialog()
-
                                 for (target in targets) {
+                                    val dialog = payload.toDialog()
                                     sessions[dialog.id] = target.uniqueId
                                     sendPayload(target, dialog)
                                 }
@@ -330,13 +329,13 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                             }
                     )
 
-                commands.registrar().register(root.build(), "GUIDialog command description")
+                commands.registrar().register(root.build(), "GUIDialog commands")
                 logger.info("Registered commands: ${root.build().children.joinToString { it.name }}")
             })
     }
 
     fun processCommand(command: String, player: Player): String {
-        return command.replace("@s", player.name)
+        return command
     }
 
     fun sendPayload(player: Player, dialog: Dialog) {
@@ -379,8 +378,10 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                     }
 
                     command = processCommand(command = command, player = player)
-                    logger.info("Running action $action for player ${player.name} and dialog $id: $command")
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
+                    val wrapped = "execute as ${player.uniqueId} at @s run $command"
+
+                    logger.info("Running action $action for player ${player.name} and dialog $id: $wrapped")
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), wrapped)
                 }
 
                 sessions.remove(id)
@@ -413,7 +414,7 @@ class GUIDialog : JavaPlugin(), Listener, PluginMessageListener {
                     return
                 }
             }
-        } catch (e: Error) {
+        } catch (e: Throwable) {
             logger.warning("Unhandled error when processing message on channel $channel from player ${player.name}: $e")
             player.sendMessage(Component.text("An unhandled error occurred.", NamedTextColor.RED))
         }
