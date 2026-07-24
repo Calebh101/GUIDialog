@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "guidialog",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"name": "GUIDialog",
 	"description": "Shows GUI dialogs, like Bedrock does.",
 	"authors": [
@@ -22,7 +22,7 @@
 		"guidialog.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.19.3",
+		"fabricloader": ">=0.19.2",
 		"minecraft": "~26.1.2",
 		"java": ">=25",
 		"fabric-api": "*",

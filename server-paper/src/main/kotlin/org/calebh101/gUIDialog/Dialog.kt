@@ -20,4 +20,14 @@ data class DialogPayload(val title: String, val body: String, val actions: Map<S
     fun toDialog(): Dialog {
         return Dialog(title, body, actions, id = Random.nextLong())
     }
+
+    fun build(): String {
+        val json = JsonObject()
+
+        json.addProperty("title", title)
+        json.addProperty("body", body)
+        json.add("actions", Gson().toJsonTree(actions))
+
+        return json.toString()
+    }
 }

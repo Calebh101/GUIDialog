@@ -9,8 +9,9 @@ import net.minecraft.client.gui.layouts.FrameLayout
 import net.minecraft.client.gui.layouts.LinearLayout
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
+import net.minecraft.world.entity.player.Player
 
-class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component.literal(dialog.title)) {
+class DialogScreen(val plugin: GUIDialog, val dialog: Dialog, val name: String) : Screen(Component.literal(dialog.title)) {
     val logger
         get() = plugin.logger
 
@@ -26,7 +27,7 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component
         val chunked = labels.chunked(3)
 
         val header = StringWidget(
-            Component.literal(dialog.title),
+            Component.literal(dialog.title.replace("{{player}}", name)),
             this.font
         )
 
@@ -41,7 +42,7 @@ class DialogScreen(val plugin: GUIDialog, val dialog: Dialog) : Screen(Component
         val contentAreaHeight = this.height - contentTop - buttonsAreaHeight - bottomMargin - rowSpacing
         val contentWidth = this.width - (contentMargin * 2)
 
-        val content = MultiLineTextWidget(Component.literal(dialog.body), this.font).setMaxWidth(contentWidth)
+        val content = MultiLineTextWidget(Component.literal(dialog.body.replace("{{player}}", name)), this.font).setMaxWidth(contentWidth)
         val frame = FrameLayout()
         frame.addChild(content)
 

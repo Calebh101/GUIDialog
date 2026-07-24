@@ -11,6 +11,7 @@ import java.util.function.Function
 
 
 data class Dialog(val title: String, val body: String, val actions: Map<String, String> /* pretty to ID */, val id: Long)
+data class OtherDialog(val title: String, val body: String, val actions: Map<String, String>)
 
 data class DialogPayload(val json: String) : CustomPacketPayload {
     private val gson = Gson()
@@ -54,6 +55,42 @@ data class DialogActionPayload(val bytes: ByteArray) : CustomPacketPayload {
                 val bytes = ByteArray(buf.readableBytes())
                 buf.readBytes(bytes)
                 DialogActionPayload(bytes)
+            }
+        )
+    }
+}
+
+data class DialogRegisterPayload(val bytes: ByteArray) : CustomPacketPayload {
+    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
+
+    companion object {
+        val ID: Identifier = Identifier.fromNamespaceAndPath("guidialog", "register")
+        val TYPE: CustomPacketPayload.Type<DialogRegisterPayload> = CustomPacketPayload.Type(ID)
+
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, DialogRegisterPayload> = StreamCodec.of(
+            { buf, value -> buf.writeBytes(value.bytes) },
+            { buf ->
+                val bytes = ByteArray(buf.readableBytes())
+                buf.readBytes(bytes)
+                DialogRegisterPayload(bytes)
+            }
+        )
+    }
+}
+
+data class DoSomethingPayload(val action: String) : CustomPacketPayload {
+    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> = TYPE
+
+    companion object {
+        val ID: Identifier = Identifier.fromNamespaceAndPath("guidialog", "something")
+        val TYPE: CustomPacketPayload.Type<DoSomethingPayload> = CustomPacketPayload.Type(ID)
+
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, DoSomethingPayload> = StreamCodec.of(
+            { buf, value -> buf.writeBytes(value.action.toByteArray()) },
+            { buf ->
+                val bytes = ByteArray(buf.readableBytes())
+                buf.readBytes(bytes)
+                DoSomethingPayload(String(bytes, Charsets.UTF_8))
             }
         )
     }

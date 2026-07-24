@@ -31,15 +31,15 @@ Other commands:
 
 Dialogs have these elements:
 
-- Title: Text shown at the top of the screen. This should not have multiple lines.
-- Body: The text shown in the center of the screen. This can be as long or have as many lines as you want; text is wrapped, and it's scrollable.
+- Title: Text shown at the top of the screen. This should not have multiple lines. (Note: `{{player}}` will be replaced by the current user's username.)
+- Body: The text shown in the center of the screen. This can be as long or have as many lines as you want; text is wrapped, and it's scrollable. (Note: `{{player}}` will be replaced by the current user's username.)
 - Actions: The buttons that your dialog will show. The name of the button and the ID of the action are both included in the dialog payload.
 
 ### Payload
 
 Make sure it's compressed to 1 line!
 
-```json
+```jsonc
 {
     "title": "Dialog title",
     "body": "Dialog body",

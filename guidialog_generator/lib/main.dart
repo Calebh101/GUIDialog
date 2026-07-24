@@ -7,6 +7,9 @@ import 'package:flutter_highlight/themes/github.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:localpkg_flutter/localpkg.dart';
 
+/// Section sign
+const String sec = "§";
+
 class DialogAction {
   final Key key = UniqueKey();
   final TextEditingController id;
@@ -77,6 +80,25 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Text("GUIDialog${changed ? "*" : ""}"),
         centerTitle: true,
+        actions: [
+          IconButton(onPressed: () async {
+            final result = await showDialog<Map>(context: context, builder: (_) => LoaderDialog());
+            if (result == null || !mounted) return;
+
+            setState(() {
+              title.text = result["title"];
+              body.text = result["body"];
+              actions.clear();
+
+              for (final entry in (result["actions"] as Map).entries) {
+                final key = entry.key as String;
+                final value = entry.value as String;
+
+                actions.add(DialogAction(id: TextEditingController(text: value), pretty: TextEditingController(text: key)));
+              }
+            });
+          }, icon: Icon(Icons.download))
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -177,6 +199,11 @@ class _HomeState extends State<Home> {
                         actions.add(DialogAction(id: TextEditingController(), pretty: TextEditingController()));
                       });
                     }, child: Text("Add Action")),
+
+                    if (calculated != null) TextButton(onPressed: () {
+                      Clipboard.setData(.new(text: sec));
+                      showSnackBar(context, "Copied: $sec");
+                    }, child: Text(sec)),
                   ],
                 ),
                 Column(
@@ -200,6 +227,64 @@ class _HomeState extends State<Home> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class LoaderDialog extends StatefulWidget {
+  const LoaderDialog({super.key});
+
+  @override
+  State<LoaderDialog> createState() => _LoaderDialogState();
+}
+
+class _LoaderDialogState extends State<LoaderDialog> {
+  final key = FormKey();
+  final controller = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text("Import Dialog from JSON"),
+      content: Form(
+        key: key,
+        child: TextFormField(
+          controller: controller,
+          decoration: .new(
+            labelText: "JSON",
+          ),
+          validator: (value) {
+            if (value == null || value.isEmptyTrimmed) return "Input must not be empty.";
+            late Map data;
+
+            try {
+              final parsed = jsonDecode(value);
+              if (parsed is! Map) return "JSON data must be an object.";
+              data = parsed;
+            } on FormatException catch (e) {
+              return "Invalid JSON: ${e.message}";
+            }
+
+            if (data["title"] is! String) return "Key title is invalid: expected string, got ${data["title"].runtimeType}.";
+            if (data["body"] is! String) return "Key body is invalid: expected string, got ${data["body"].runtimeType}.";
+            if (data["actions"] is! Map) return "Key actions is invalid: expected object, got ${data["actions"].runtimeType}.";
+
+            for (final entry in (data["actions"] as Map).entries) {
+              if (entry.key is! String) return "Action key invalid: expected string, got ${entry.key.runtimeType}.";
+              if (entry.value is! String) return "Action value invalid: expected string, got ${entry.value.runtimeType}.";
+            }
+
+            return null;
+          },
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: context.navigator.pop, child: Text("Cancel")),
+        TextButton(onPressed: () {
+          if (!key.validate()) return;
+          context.navigator.pop(jsonDecode(controller.text));
+        }, child: Text("OK")),
+      ],
     );
   }
 }
